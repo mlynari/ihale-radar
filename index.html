@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a0d12"/>
+  <title>İhaleRadar Pro — Kamu Araç İhale Analizi</title>
+  <meta name="description" content="Kamu araç ihalelerini tek ekranda incelemek, filtrelemek, karşılaştırmak ve fırsat skoruna göre sıralamak için gelişmiş prototip."/>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-wrap">
+        <a class="brand" href="#dashboard" aria-label="İhaleRadar ana sayfa">
+          <span class="brand-mark">İR</span>
+          <span class="brand-text">İhale<span>Radar</span></span>
+        </a>
+        <button class="icon-only mobile-close" id="closeSidebar" aria-label="Menüyü kapat">×</button>
+      </div>
+
+      <nav class="side-nav" aria-label="Ana menü">
+        <button class="nav-item active" data-view="dashboard">
+          <span class="nav-icon">⌂</span><span>Genel Bakış</span>
+        </button>
+        <button class="nav-item" data-view="listings">
+          <span class="nav-icon">◫</span><span>İhaleler</span>
+          <span class="nav-count" id="navListingCount">0</span>
+        </button>
+        <button class="nav-item" data-view="watchlist">
+          <span class="nav-icon">★</span><span>Takip Listesi</span>
+          <span class="nav-count" id="navFavCount">0</span>
+        </button>
+        <button class="nav-item" data-view="alerts">
+          <span class="nav-icon">◉</span><span>Alarmlar</span>
+          <span class="nav-count" id="navAlertCount">0</span>
+        </button>
+        <button class="nav-item" data-view="analytics">
+          <span class="nav-icon">⌁</span><span>Analitik</span>
+        </button>
+        <button class="nav-item" data-view="data">
+          <span class="nav-icon">⇅</span><span>Veri Merkezi</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="source-status">
+        <div class="status-row">
+          <span class="pulse"></span>
+          <div>
+            <strong>Demo veri modu</strong>
+            <small>Canlı kaynak bağlantısı kapalı</small>
+          </div>
+        </div>
+        <button class="subtle-btn full" data-view-jump="data">Veri bağlantılarını yönet</button>
+      </div>
+
+      <div class="user-card">
+        <div class="avatar">IR</div>
+        <div class="user-meta">
+          <strong>Yönetici</strong>
+          <small>Prototip hesabı</small>
+        </div>
+        <button class="icon-only" id="themeToggle" title="Tema değiştir">◐</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-only mobile-menu" id="openSidebar" aria-label="Menüyü aç">☰</button>
+          <div>
+            <p class="page-kicker">İHALE RADAR</p>
+            <h1 id="pageTitle">Genel Bakış</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="global-search">
+            <span>⌕</span>
+            <input id="globalSearch" placeholder="Marka, model, şehir ara…" autocomplete="off"/>
+            <kbd>⌘ K</kbd>
+          </div>
+          <button class="secondary-btn" id="quickAlertBtn">+ Alarm Kur</button>
+          <button class="primary-btn" id="goListingsBtn">İhaleleri Gör</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <!-- DASHBOARD -->
+        <section class="view active" id="view-dashboard">
+          <div class="notice">
+            <div>
+              <strong>Bu sürüm gerçek ürün demosudur.</strong>
+              <span>İlanlar örnek veridir; resmi ihale kaynaklarını doğrulamadan işlem yapılmamalıdır.</span>
+            </div>
+            <button class="link-btn" data-view-jump="data">CSV ile gerçek veri ekle →</button>
+          </div>
+
+          <section class="hero-card">
+            <div class="hero-copy">
+              <span class="eyebrow">AKILLI İHALE KEŞFİ</span>
+              <h2>Binlerce ilan arasında<br/><span>gerçek fırsatı ayıkla.</span></h2>
+              <p>Fiyat avantajı, kapanış süresi ve araç verilerini tek skorda birleştiren sade bir karar ekranı.</p>
+              <div class="hero-actions">
+                <button class="primary-btn large" data-view-jump="listings">Fırsatları İncele</button>
+                <button class="secondary-btn large" id="heroAlertBtn">Marka alarmı kur</button>
+              </div>
+            </div>
+            <div class="hero-visual">
+              <div class="radar-card">
+                <div class="radar-ring ring-1"></div>
+                <div class="radar-ring ring-2"></div>
+                <div class="radar-ring ring-3"></div>
+                <div class="radar-line"></div>
+                <div class="radar-dot dot-a"></div>
+                <div class="radar-dot dot-b"></div>
+                <div class="radar-dot dot-c"></div>
+                <div class="radar-score">
+                  <span>En iyi skor</span>
+                  <strong id="heroBestScore">—</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="kpi-grid" id="kpiGrid">
+            <article class="kpi-card">
+              <span class="kpi-label">Aktif ilan</span>
+              <strong id="kpiListings">0</strong>
+              <span class="kpi-foot"><b id="kpiSources">0</b> kaynak</span>
+            </article>
+            <article class="kpi-card">
+              <span class="kpi-label">Ort. fiyat avantajı</span>
+              <strong id="kpiDiscount">%0</strong>
+              <span class="kpi-foot positive">Piyasa tahminine göre</span>
+            </article>
+            <article class="kpi-card">
+              <span class="kpi-label">8+ fırsat skoru</span>
+              <strong id="kpiHot">0</strong>
+              <span class="kpi-foot">Yüksek öncelikli araç</span>
+            </article>
+            <article class="kpi-card">
+              <span class="kpi-label">24 saatte kapanan</span>
+              <strong id="kpiClosing">0</strong>
+              <span class="kpi-foot warning">Hızlı aksiyon gerekebilir</span>
+            </article>
+          </section>
+
+          <section class="dashboard-grid">
+            <article class="panel span-2">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">ÖNE ÇIKANLAR</span>
+                  <h3>Bugünün fırsatları</h3>
+                </div>
+                <button class="link-btn" data-view-jump="listings">Tümünü gör →</button>
+              </div>
+              <div class="featured-list" id="featuredList"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">PAZAR</span>
+                  <h3>Kaynak dağılımı</h3>
+                </div>
+              </div>
+              <div class="mini-chart" id="sourceMiniChart"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">ZAMAN</span>
+                  <h3>Yaklaşan kapanışlar</h3>
+                </div>
+              </div>
+              <div class="timeline" id="closingTimeline"></div>
+            </article>
+
+            <article class="panel span-2">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">HIZLI TARAMA</span>
+                  <h3>Markaya göre fırsat</h3>
+                </div>
+              </div>
+              <div class="brand-strip" id="brandStrip"></div>
+            </article>
+          </section>
+        </section>
+
+        <!-- LISTINGS -->
+        <section class="view" id="view-listings">
+          <div class="listings-layout">
+            <aside class="filter-panel">
+              <div class="filter-head">
+                <div>
+                  <span class="eyebrow">FİLTRE</span>
+                  <h3>İhale ara</h3>
+                </div>
+                <button class="link-btn" id="resetFilters">Sıfırla</button>
+              </div>
+
+              <label class="field">
+                <span>Arama</span>
+                <input id="searchFilter" placeholder="E220, BMW, Gaziantep…"/>
+              </label>
+
+              <div class="field two-col">
+                <label>
+                  <span>Marka</span>
+                  <select id="brandFilter"><option value="">Tümü</option></select>
+                </label>
+                <label>
+                  <span>Şehir</span>
+                  <select id="cityFilter"><option value="">Tümü</option></select>
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Kaynak</span>
+                <select id="sourceFilter"><option value="">Tümü</option></select>
+              </label>
+
+              <div class="field two-col">
+                <label>
+                  <span>Min. yıl</span>
+                  <input id="minYearFilter" type="number" min="1990" max="2030" placeholder="2018"/>
+                </label>
+                <label>
+                  <span>Maks. fiyat</span>
+                  <input id="maxPriceFilter" type="number" min="0" step="50000" placeholder="2.000.000"/>
+                </label>
+              </div>
+
+              <label class="field">
+                <div class="field-row">
+                  <span>Min. fırsat skoru</span>
+                  <strong id="scoreFilterValue">0.0</strong>
+                </div>
+                <input id="scoreFilter" type="range" min="0" max="10" step="0.1" value="0"/>
+              </label>
+
+              <label class="check">
+                <input type="checkbox" id="discount20Filter"/>
+                <span><b>%20+ avantaj</b><small>Sadece güçlü fiyat farkları</small></span>
+              </label>
+
+              <label class="check">
+                <input type="checkbox" id="closingSoonFilter"/>
+                <span><b>Yakında kapananlar</b><small>48 saat içinde</small></span>
+              </label>
+
+              <button class="primary-btn full" id="saveCurrentAlert">Bu filtreyi alarm yap</button>
+            </aside>
+
+            <section class="listing-results">
+              <div class="results-toolbar">
+                <div>
+                  <span class="eyebrow">İHALELER</span>
+                  <h2><span id="listingResultCount">0</span> araç bulundu</h2>
+                </div>
+                <div class="toolbar-actions">
+                  <div class="segmented" id="layoutToggle">
+                    <button class="active" data-layout="cards">▦</button>
+                    <button data-layout="table">☷</button>
+                  </div>
+                  <select id="sortFilter">
+                    <option value="score">Fırsat skoru</option>
+                    <option value="discount">Fiyat avantajı</option>
+                    <option value="closing">Kapanış yakınlığı</option>
+                    <option value="priceAsc">Fiyat ↑</option>
+                    <option value="priceDesc">Fiyat ↓</option>
+                    <option value="yearDesc">Yıl ↓</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="compare-bar hidden" id="compareBar">
+                <span><strong id="compareCount">0</strong> araç karşılaştırmaya eklendi</span>
+                <div>
+                  <button class="link-btn" id="clearCompare">Temizle</button>
+                  <button class="primary-btn" id="openCompare">Karşılaştır</button>
+                </div>
+              </div>
+
+              <div class="listing-cards" id="listingCards"></div>
+
+              <div class="listing-table-wrap hidden" id="listingTableWrap">
+                <table class="listing-table">
+                  <thead>
+                    <tr>
+                      <th>Araç</th><th>Şehir</th><th>İhale</th><th>Piyasa</th><th>Avantaj</th><th>Skor</th><th>Kapanış</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="listingTableBody"></tbody>
+                </table>
+              </div>
+
+              <div class="empty-state hidden" id="listingEmpty">
+                <div class="empty-icon">⌕</div>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Filtreleri biraz genişletip tekrar dene.</p>
+                <button class="secondary-btn" id="emptyReset">Filtreleri temizle</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- WATCHLIST -->
+        <section class="view" id="view-watchlist">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">TAKİP</span>
+              <h2>Favori araçların</h2>
+              <p>İlgilendiğin ilanları tek yerde tut ve karşılaştır.</p>
+            </div>
+            <button class="primary-btn" data-view-jump="listings">+ İhale Ekle</button>
+          </div>
+          <div class="listing-cards" id="watchlistCards"></div>
+          <div class="empty-state hidden" id="watchlistEmpty">
+            <div class="empty-icon">★</div>
+            <h3>Takip listen boş</h3>
+            <p>İhalelerde yıldız ikonuna basarak araçları buraya ekleyebilirsin.</p>
+            <button class="primary-btn" data-view-jump="listings">İhalelere git</button>
+          </div>
+        </section>
+
+        <!-- ALERTS -->
+        <section class="view" id="view-alerts">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">ALARMLAR</span>
+              <h2>Kriteri sen belirle, fırsat kaçmasın.</h2>
+              <p>Prototipte alarmlar tarayıcıda saklanır. Canlı sürümde e-posta/WhatsApp ile gönderilir.</p>
+            </div>
+            <button class="primary-btn" id="newAlertBtn">+ Yeni Alarm</button>
+          </div>
+          <div class="alert-grid" id="alertGrid"></div>
+          <div class="empty-state hidden" id="alertsEmpty">
+            <div class="empty-icon">◉</div>
+            <h3>Henüz alarm yok</h3>
+            <p>Örneğin “Mercedes + Gaziantep + 8 üzeri skor” şeklinde alarm kurabilirsin.</p>
+            <button class="primary-btn" id="alertsEmptyBtn">İlk alarmı kur</button>
+          </div>
+        </section>
+
+        <!-- ANALYTICS -->
+        <section class="view" id="view-analytics">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">ANALİTİK</span>
+              <h2>Pazarın nabzını tek ekranda gör.</h2>
+              <p>Demo veri setindeki fiyat, marka, şehir ve kaynak dağılımlarının özeti.</p>
+            </div>
+            <button class="secondary-btn" id="exportAnalyticsBtn">CSV dışa aktar</button>
+          </div>
+
+          <section class="analytics-grid">
+            <article class="panel span-2">
+              <div class="panel-head"><div><span class="eyebrow">MARKA</span><h3>Marka bazında ortalama avantaj</h3></div></div>
+              <div class="bar-chart" id="brandDiscountChart"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><span class="eyebrow">ŞEHİR</span><h3>En çok ilan</h3></div></div>
+              <div class="rank-list" id="cityRank"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><span class="eyebrow">FIRSAT</span><h3>Skor dağılımı</h3></div></div>
+              <div class="donut-wrap">
+                <div class="donut" id="scoreDonut"><div><strong id="donutHot">0</strong><span>8+ skor</span></div></div>
+                <div class="legend" id="scoreLegend"></div>
+              </div>
+            </article>
+            <article class="panel span-2">
+              <div class="panel-head"><div><span class="eyebrow">FİYAT</span><h3>Fiyat bantları</h3></div></div>
+              <div class="bar-chart horizontal" id="priceBandChart"></div>
+            </article>
+          </section>
+        </section>
+
+        <!-- DATA -->
+        <section class="view" id="view-data">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">VERİ MERKEZİ</span>
+              <h2>İlan verisini yönet.</h2>
+              <p>Gerçek entegrasyon gelene kadar CSV içe aktarma ile sistemi canlı kullanabilirsin.</p>
+            </div>
+          </div>
+
+          <section class="data-grid">
+            <article class="panel">
+              <div class="integration-head">
+                <div class="source-logo">G</div>
+                <div><h3>GİB</h3><p>Hacizli mal ilanları</p></div>
+                <span class="integration-pill offline">Bağlı değil</span>
+              </div>
+              <p class="muted">Canlı sürümde kullanım şartları doğrulandıktan sonra resmi kaynak bağlantısı burada yönetilecek.</p>
+            </article>
+            <article class="panel">
+              <div class="integration-head">
+                <div class="source-logo">U</div>
+                <div><h3>UYAP e-Satış</h3><p>Elektronik satış ilanları</p></div>
+                <span class="integration-pill offline">Bağlı değil</span>
+              </div>
+              <p class="muted">Veri çekme yöntemi resmi erişim ve kullanım şartlarına uygun şekilde tasarlanmalıdır.</p>
+            </article>
+            <article class="panel">
+              <div class="integration-head">
+                <div class="source-logo">T</div>
+                <div><h3>Ticaret Bakanlığı</h3><p>Tasfiyelik araçlar</p></div>
+                <span class="integration-pill offline">Bağlı değil</span>
+              </div>
+              <p class="muted">MVP, gerçek API/scraping kararı verilene kadar CSV tabanlı çalışabilir.</p>
+            </article>
+          </section>
+
+          <section class="panel import-panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">CSV İÇE AKTAR</span>
+                <h3>Kendi ilanlarını yükle</h3>
+              </div>
+              <button class="secondary-btn" id="downloadTemplate">CSV şablonunu indir</button>
+            </div>
+            <div class="dropzone" id="dropzone">
+              <input type="file" id="csvFile" accept=".csv,text/csv"/>
+              <div class="drop-icon">⇧</div>
+              <strong>CSV dosyasını buraya bırak</strong>
+              <span>veya seçmek için tıkla</span>
+              <small>UTF-8 CSV • Maks. önerilen 5.000 satır</small>
+            </div>
+            <div class="import-actions">
+              <button class="secondary-btn" id="exportDataBtn">Tüm veriyi CSV indir</button>
+              <button class="danger-btn" id="resetDemoBtn">Demo verisine dön</button>
+            </div>
+          </section>
+
+          <section class="panel schema-panel">
+            <div class="panel-head"><div><span class="eyebrow">ŞEMA</span><h3>Beklenen CSV sütunları</h3></div></div>
+            <code>source, brand, model, year, city, auctionPrice, marketPrice, deadline, url</code>
+            <p class="muted">Örnek: <b>GİB, Mercedes-Benz, E 220 d, 2018, Gaziantep, 1080000, 1520000, 2026-08-27T16:00:00, https://...</b></p>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="sidebarOverlay"></div>
+
+  <!-- DETAIL DRAWER -->
+  <aside class="drawer" id="detailDrawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div>
+        <span class="eyebrow">İHALE DETAYI</span>
+        <h2 id="drawerTitle">Araç</h2>
+      </div>
+      <button class="icon-only" id="closeDrawer">×</button>
+    </div>
+    <div id="drawerContent"></div>
+  </aside>
+  <div class="drawer-overlay hidden" id="drawerOverlay"></div>
+
+  <!-- ALERT MODAL -->
+  <dialog id="alertModal">
+    <form method="dialog" class="modal-card" id="alertForm">
+      <div class="modal-head">
+        <div><span class="eyebrow">YENİ ALARM</span><h2>Fırsat alarmı kur</h2></div>
+        <button value="cancel" class="icon-only">×</button>
+      </div>
+      <p class="muted">Bu prototipte alarm kaydı cihazında tutulur. Canlı sürümde bildirim kanalını bağlarız.</p>
+      <div class="modal-grid">
+        <label class="field"><span>Alarm adı</span><input id="alertName" required placeholder="Örn. Gaziantep Mercedes"/></label>
+        <label class="field"><span>Marka</span><select id="alertBrand"><option value="">Tüm markalar</option></select></label>
+        <label class="field"><span>Şehir</span><select id="alertCity"><option value="">Tüm şehirler</option></select></label>
+        <label class="field"><span>Min. skor</span><input id="alertMinScore" type="number" min="0" max="10" step="0.1" value="8"/></label>
+        <label class="field"><span>Maks. ihale fiyatı</span><input id="alertMaxPrice" type="number" min="0" step="50000" placeholder="Boş bırakılabilir"/></label>
+        <label class="field"><span>Bildirim</span><select id="alertChannel"><option>E-posta (demo)</option><option>WhatsApp (yakında)</option></select></label>
+      </div>
+      <div class="modal-actions">
+        <button value="cancel" class="secondary-btn">Vazgeç</button>
+        <button value="default" class="primary-btn" id="createAlertBtn">Alarmı Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- COMPARE MODAL -->
+  <dialog id="compareModal">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div><span class="eyebrow">KARŞILAŞTIRMA</span><h2>Yan yana karar ver</h2></div>
+        <button class="icon-only" id="closeCompareModal">×</button>
+      </div>
+      <div class="compare-table-wrap" id="compareTableWrap"></div>
+    </div>
+  </dialog>
+
+  <!-- TOASTS -->
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
